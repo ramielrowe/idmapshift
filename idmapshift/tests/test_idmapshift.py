@@ -136,7 +136,7 @@ class ShiftDirTestCase(BaseTestCase):
     @mock.patch('os.walk')
     def test_shift_dir(self, mock_walk, mock_join, mock_shift_path):
         mock_walk.return_value = [('/', ['a', 'b'], ['c', 'd'])]
-        mock_join.side_effect = lambda f, *args: f+'/'.join(args)
+        mock_join.side_effect = lambda f, *args: f + '/'.join(args)
 
         main.shift_dir('/', self.uid_maps, self.gid_maps, main.NOBODY_ID)
 
@@ -147,7 +147,7 @@ class ShiftDirTestCase(BaseTestCase):
 
         args = (self.uid_maps, self.gid_maps, main.NOBODY_ID)
         kwargs = dict(dry_run=False, verbose=False)
-        shift_path_calls = [mock.call('/'+x, *args, **kwargs) for x in files]
+        shift_path_calls = [mock.call('/' + x, *args, **kwargs) for x in files]
         mock_shift_path.assert_has_calls(shift_path_calls)
 
     @mock.patch('idmapshift.main.shift_path')
@@ -155,8 +155,7 @@ class ShiftDirTestCase(BaseTestCase):
     @mock.patch('os.walk')
     def test_shift_dir_dry_run(self, mock_walk, mock_join, mock_shift_path):
         mock_walk.return_value = [('/', ['a', 'b'], ['c', 'd'])]
-        mock_join.side_effect = lambda f, *args: f+'/'.join(args)
-
+        mock_join.side_effect = lambda f, *args: f + '/'.join(args)
 
         main.shift_dir('/', self.uid_maps, self.gid_maps, main.NOBODY_ID,
                        dry_run=True)
@@ -169,7 +168,7 @@ class ShiftDirTestCase(BaseTestCase):
 
         args = (self.uid_maps, self.gid_maps, main.NOBODY_ID)
         kwargs = dict(dry_run=True, verbose=False)
-        shift_path_calls = [mock.call('/'+x, *args, **kwargs) for x in files]
+        shift_path_calls = [mock.call('/' + x, *args, **kwargs) for x in files]
         mock_shift_path.assert_has_calls(shift_path_calls)
 
 
@@ -201,6 +200,7 @@ class MainTestCase(BaseTestCase):
         mock_parser.verbose = False
         mock_parser_class.return_value = mock_parser
         main.main()
-        mock_shift_dir_call = mock.call('/test/path', self.uid_maps, self.gid_maps, main.NOBODY_ID,
+        mock_shift_dir_call = mock.call('/test/path', self.uid_maps,
+                                        self.gid_maps, main.NOBODY_ID,
                                         dry_run=False, verbose=False)
         mock_shift_dir.assert_has_calls([mock_shift_dir_call])

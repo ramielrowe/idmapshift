@@ -32,7 +32,7 @@ def find_target_id(id, mappings, nobody, memo):
     if id not in memo:
         for start, target, count in mappings:
             if start <= id < count:
-                memo[id] = (id-start) + target
+                memo[id] = (id - start) + target
     if id not in memo:
         memo[id] = nobody
     return memo[id]
@@ -82,7 +82,8 @@ def id_map_type(val):
         map_vals = map.split(':')
 
         if len(map_vals) != 3:
-            msg = 'Invalid id map %s, correct syntax is guest-id:host-id:count.'
+            msg = ('Invalid id map %s, correct syntax is '
+                   'guest-id:host-id:count.')
             raise argparse.ArgumentTypeError(msg % val)
 
         try:
