@@ -1,0 +1,7 @@
+# Packages needed for dev testing
+coverage
+distribute>=0.6.24
+mock
+nose
+pep8>=1.4.5
+pylint==0.25.2
