@@ -18,61 +18,10 @@
 # under the License.
 
 import argparse
-import os
+
+import idmapshift
 
 NOBODY_ID = 65534
-
-UID_MAPPINGS = dict()
-GID_MAPPINGS = dict()
-
-
-def find_target_id(id, mappings, nobody, memo):
-    if len(mappings) == 0:
-        return -1
-    if id not in memo:
-        for start, target, count in mappings:
-            if start <= id < count:
-                memo[id] = (id - start) + target
-    if id not in memo:
-        memo[id] = nobody
-    return memo[id]
-
-
-def find_target_uid(id, mappings, nobody):
-    return find_target_id(id, mappings, nobody, UID_MAPPINGS)
-
-
-def find_target_gid(id, mappings, nobody):
-    return find_target_id(id, mappings, nobody, GID_MAPPINGS)
-
-
-def print_chown(path, uid, gid, target_uid, target_gid):
-    print('%s %s:%s -> %s:%s' % (path, uid, gid, target_uid, target_gid))
-
-
-def shift_path(path, uid_mappings, gid_mappings, nobody,
-               dry_run=False, verbose=False):
-    uid = os.lstat(path).st_uid
-    gid = os.lstat(path).st_gid
-    target_uid = find_target_uid(uid, uid_mappings, nobody)
-    target_gid = find_target_uid(gid, gid_mappings, nobody)
-    if verbose:
-        print_chown(path, uid, gid, target_uid, target_gid)
-    if not dry_run:
-        os.lchown(path, target_uid, target_gid)
-
-
-def shift_dir(dir, uid_mappings, gid_mappings, nobody,
-              dry_run=False, verbose=False):
-    for root, dirs, files in os.walk(dir):
-        for dir in dirs:
-            path = os.path.join(root, dir)
-            shift_path(path, uid_mappings, gid_mappings, nobody,
-                       dry_run=dry_run, verbose=verbose)
-        for file in files:
-            path = os.path.join(root, file)
-            shift_path(path, uid_mappings, gid_mappings, nobody,
-                       dry_run=dry_run, verbose=verbose)
 
 
 def id_map_type(val):
@@ -106,5 +55,5 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
 
-    shift_dir(args.path, args.uid, args.gid, args.nobody,
-              dry_run=args.dry_run, verbose=args.verbose)
+    idmapshift.shift_dir(args.path, args.uid, args.gid, args.nobody,
+                         dry_run=args.dry_run, verbose=args.verbose)

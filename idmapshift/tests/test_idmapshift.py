@@ -21,6 +21,7 @@ import argparse
 import mock
 import unittest
 
+import idmapshift
 from idmapshift import main
 
 
@@ -39,63 +40,63 @@ class BaseTestCase(unittest.TestCase):
 
 class FindTargetIDTestCase(BaseTestCase):
     def test_find_target_id_range_1_first(self):
-        actual_target = main.find_target_id(0, self.uid_maps,
-                                            main.NOBODY_ID, dict())
+        actual_target = idmapshift.find_target_id(0, self.uid_maps,
+                                                  main.NOBODY_ID, dict())
         self.assertEqual(10000, actual_target)
 
     def test_find_target_id_inside_range_1(self):
-        actual_target = main.find_target_id(2, self.uid_maps,
-                                            main.NOBODY_ID, dict())
+        actual_target = idmapshift.find_target_id(2, self.uid_maps,
+                                                  main.NOBODY_ID, dict())
         self.assertEqual(10002, actual_target)
 
     def test_find_target_id_range_2_first(self):
-        actual_target = main.find_target_id(10, self.uid_maps,
-                                            main.NOBODY_ID, dict())
+        actual_target = idmapshift.find_target_id(10, self.uid_maps,
+                                                  main.NOBODY_ID, dict())
         self.assertEqual(20000, actual_target)
 
     def test_find_target_id_inside_range_2(self):
-        actual_target = main.find_target_id(100, self.uid_maps,
-                                            main.NOBODY_ID, dict())
+        actual_target = idmapshift.find_target_id(100, self.uid_maps,
+                                                  main.NOBODY_ID, dict())
         self.assertEqual(20090, actual_target)
 
     def test_find_target_id_outside_range(self):
-        actual_target = main.find_target_id(10000, self.uid_maps,
-                                            main.NOBODY_ID, dict())
+        actual_target = idmapshift.find_target_id(10000, self.uid_maps,
+                                                  main.NOBODY_ID, dict())
         self.assertEqual(main.NOBODY_ID, actual_target)
 
     def test_find_target_id_no_mappings(self):
-        actual_target = main.find_target_id(0, [],
-                                            main.NOBODY_ID, dict())
+        actual_target = idmapshift.find_target_id(0, [],
+                                                  main.NOBODY_ID, dict())
         self.assertEqual(-1, actual_target)
 
     def test_find_target_id_updates_memo(self):
         memo = dict()
-        main.find_target_id(0, self.uid_maps, main.NOBODY_ID, memo)
+        idmapshift.find_target_id(0, self.uid_maps, main.NOBODY_ID, memo)
         self.assertTrue(0 in memo)
         self.assertEqual(10000, memo[0])
 
     def test_find_target_id_in_memo(self):
         mock_maps = mock.MagicMock()
         mock_maps.__len__.return_value = 1
-        actual_target = main.find_target_id(0, mock_maps,
-                                            main.NOBODY_ID, {0: 100})
+        actual_target = idmapshift.find_target_id(0, mock_maps,
+                                                  main.NOBODY_ID, {0: 100})
         self.assertEqual(1, len(mock_maps.mock_calls))
         mock_maps.__len__.assert_has_calls([mock.call()])
         self.assertEqual(100, actual_target)
 
-    @mock.patch('idmapshift.main.find_target_id')
+    @mock.patch('idmapshift.find_target_id')
     def test_find_target_uid_uses_uid_memo(self, mock_ftid):
-        main.find_target_uid(0, self.uid_maps, main.NOBODY_ID)
+        idmapshift.find_target_uid(0, self.uid_maps, main.NOBODY_ID)
         self.assertEqual(1, len(mock_ftid.mock_calls))
         args, kwargs = mock_ftid.call_args
-        self.assertIs(main.UID_MAPPINGS, args[3])
+        self.assertIs(idmapshift.UID_MAPPINGS, args[3])
 
-    @mock.patch('idmapshift.main.find_target_id')
+    @mock.patch('idmapshift.find_target_id')
     def test_find_target_gid_uses_gid_memo(self, mock_ftid):
-        main.find_target_gid(0, self.gid_maps, main.NOBODY_ID)
+        idmapshift.find_target_gid(0, self.gid_maps, main.NOBODY_ID)
         self.assertEqual(1, len(mock_ftid.mock_calls))
         args, kwargs = mock_ftid.call_args
-        self.assertIs(main.GID_MAPPINGS, args[3])
+        self.assertIs(idmapshift.GID_MAPPINGS, args[3])
 
 
 class ShiftPathTestCase(BaseTestCase):
@@ -103,8 +104,8 @@ class ShiftPathTestCase(BaseTestCase):
     @mock.patch('os.lstat')
     def test_shift_path(self, mock_lstat, mock_lchown):
         mock_lstat.return_value = FakeStat(0, 0)
-        main.shift_path('/test/path', self.uid_maps, self.gid_maps,
-                        main.NOBODY_ID)
+        idmapshift.shift_path('/test/path', self.uid_maps, self.gid_maps,
+                              main.NOBODY_ID)
         mock_lstat.assert_has_calls([mock.call('/test/path')])
         mock_lchown.assert_has_calls([mock.call('/test/path', 10000, 10000)])
 
@@ -112,18 +113,18 @@ class ShiftPathTestCase(BaseTestCase):
     @mock.patch('os.lstat')
     def test_shift_path_dry_run(self, mock_lstat, mock_lchown):
         mock_lstat.return_value = FakeStat(0, 0)
-        main.shift_path('/test/path', self.uid_maps, self.gid_maps,
-                        main.NOBODY_ID, dry_run=True)
+        idmapshift.shift_path('/test/path', self.uid_maps, self.gid_maps,
+                              main.NOBODY_ID, dry_run=True)
         mock_lstat.assert_has_calls([mock.call('/test/path')])
         self.assertEqual(0, len(mock_lchown.mock_calls))
 
     @mock.patch('os.lchown')
-    @mock.patch('idmapshift.main.print_chown')
+    @mock.patch('idmapshift.print_chown')
     @mock.patch('os.lstat')
     def test_shift_path_verbose(self, mock_lstat, mock_print, mock_lchown):
         mock_lstat.return_value = FakeStat(0, 0)
-        main.shift_path('/test/path', self.uid_maps, self.gid_maps,
-                        main.NOBODY_ID, verbose=True)
+        idmapshift.shift_path('/test/path', self.uid_maps, self.gid_maps,
+                              main.NOBODY_ID, verbose=True)
         mock_lstat.assert_has_calls([mock.call('/test/path')])
         mock_print_call = mock.call('/test/path', 0, 0, 10000, 10000)
         mock_print.assert_has_calls([mock_print_call])
@@ -131,14 +132,14 @@ class ShiftPathTestCase(BaseTestCase):
 
 
 class ShiftDirTestCase(BaseTestCase):
-    @mock.patch('idmapshift.main.shift_path')
+    @mock.patch('idmapshift.shift_path')
     @mock.patch('os.path.join')
     @mock.patch('os.walk')
     def test_shift_dir(self, mock_walk, mock_join, mock_shift_path):
         mock_walk.return_value = [('/', ['a', 'b'], ['c', 'd'])]
         mock_join.side_effect = lambda f, *args: f + '/'.join(args)
 
-        main.shift_dir('/', self.uid_maps, self.gid_maps, main.NOBODY_ID)
+        idmapshift.shift_dir('/', self.uid_maps, self.gid_maps, main.NOBODY_ID)
 
         files = ['a', 'b', 'c', 'd']
         mock_walk.assert_has_calls([mock.call('/')])
@@ -150,15 +151,15 @@ class ShiftDirTestCase(BaseTestCase):
         shift_path_calls = [mock.call('/' + x, *args, **kwargs) for x in files]
         mock_shift_path.assert_has_calls(shift_path_calls)
 
-    @mock.patch('idmapshift.main.shift_path')
+    @mock.patch('idmapshift.shift_path')
     @mock.patch('os.path.join')
     @mock.patch('os.walk')
     def test_shift_dir_dry_run(self, mock_walk, mock_join, mock_shift_path):
         mock_walk.return_value = [('/', ['a', 'b'], ['c', 'd'])]
         mock_join.side_effect = lambda f, *args: f + '/'.join(args)
 
-        main.shift_dir('/', self.uid_maps, self.gid_maps, main.NOBODY_ID,
-                       dry_run=True)
+        idmapshift.shift_dir('/', self.uid_maps, self.gid_maps, main.NOBODY_ID,
+                             dry_run=True)
 
         mock_walk.assert_has_calls([mock.call('/')])
 
@@ -187,7 +188,7 @@ class IDMapTypeTestCase(unittest.TestCase):
 
 
 class MainTestCase(BaseTestCase):
-    @mock.patch('idmapshift.main.shift_dir')
+    @mock.patch('idmapshift.shift_dir')
     @mock.patch('argparse.ArgumentParser')
     def test_main(self, mock_parser_class, mock_shift_dir):
         mock_parser = mock.MagicMock()
