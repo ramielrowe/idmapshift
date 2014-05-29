@@ -25,6 +25,14 @@ import idmapshift
 from idmapshift import main
 
 
+def join_side_effect(root, *args):
+    path = root
+    if root != '/':
+        path += '/'
+    path += '/'.join(args)
+    return path
+
+
 class FakeStat(object):
     def __init__(self, uid, gid):
         self.st_uid = uid
@@ -123,7 +131,7 @@ class ShiftDirTestCase(BaseTestCase):
     @mock.patch('os.walk')
     def test_shift_dir(self, mock_walk, mock_join, mock_shift_path):
         mock_walk.return_value = [('/', ['a', 'b'], ['c', 'd'])]
-        mock_join.side_effect = lambda f, *args: f + '/'.join(args)
+        mock_join.side_effect = join_side_effect
 
         idmapshift.shift_dir('/', self.uid_maps, self.gid_maps, main.NOBODY_ID)
 
@@ -143,7 +151,7 @@ class ShiftDirTestCase(BaseTestCase):
     @mock.patch('os.walk')
     def test_shift_dir_dry_run(self, mock_walk, mock_join, mock_shift_path):
         mock_walk.return_value = [('/', ['a', 'b'], ['c', 'd'])]
-        mock_join.side_effect = lambda f, *args: f + '/'.join(args)
+        mock_join.side_effect = join_side_effect
 
         idmapshift.shift_dir('/', self.uid_maps, self.gid_maps, main.NOBODY_ID,
                              dry_run=True)
@@ -193,3 +201,69 @@ class MainTestCase(BaseTestCase):
                                         self.gid_maps, main.NOBODY_ID,
                                         dry_run=False, verbose=False)
         mock_shift_dir.assert_has_calls([mock_shift_dir_call])
+
+
+class IntegrationTestCase(BaseTestCase):
+    @mock.patch('os.lchown')
+    @mock.patch('os.lstat')
+    @mock.patch('os.path.join')
+    @mock.patch('os.walk')
+    def test_integrated_shift_dir(self, mock_walk, mock_join, mock_lstat,
+                                  mock_lchown):
+        mock_walk.return_value = [('/', ['a', 'b', 'c'], ['d']),
+                                  ('/d', ['1', '2'], [])]
+        mock_join.side_effect = join_side_effect
+
+        def lstat(path):
+            stats = {
+                'a': FakeStat(0, 0),
+                'b': FakeStat(0, 2),
+                'c': FakeStat(30000, 30000),
+                'd': FakeStat(100, 100),
+                '1': FakeStat(0, 100),
+                '2': FakeStat(100, 100),
+            }
+            return stats[path[-1]]
+
+        mock_lstat.side_effect = lstat
+
+        idmapshift.shift_dir('/tmp/test', self.uid_maps, self.gid_maps,
+                             main.NOBODY_ID, verbose=True)
+
+        lchown_calls = [
+            mock.call('/a', 10000, 10000),
+            mock.call('/b', 10000, 10002),
+            mock.call('/c', main.NOBODY_ID, main.NOBODY_ID),
+            mock.call('/d', 20090, 20090),
+            mock.call('/d/1', 10000, 20090),
+            mock.call('/d/2', 20090, 20090),
+        ]
+        mock_lchown.assert_has_calls(lchown_calls)
+
+    @mock.patch('os.lchown')
+    @mock.patch('os.lstat')
+    @mock.patch('os.path.join')
+    @mock.patch('os.walk')
+    def test_integrated_shift_dir_dry_run(self, mock_walk, mock_join,
+                                          mock_lstat, mock_lchown):
+        mock_walk.return_value = [('/', ['a', 'b', 'c'], ['d']),
+                                  ('/d', ['1', '2'], [])]
+        mock_join.side_effect = join_side_effect
+
+        def lstat(path):
+            stats = {
+                'a': FakeStat(0, 0),
+                'b': FakeStat(0, 2),
+                'c': FakeStat(30000, 30000),
+                'd': FakeStat(100, 100),
+                '1': FakeStat(0, 100),
+                '2': FakeStat(100, 100),
+            }
+            return stats[path[-1]]
+
+        mock_lstat.side_effect = lstat
+
+        idmapshift.shift_dir('/tmp/test', self.uid_maps, self.gid_maps,
+                             main.NOBODY_ID, dry_run=True, verbose=True)
+
+        self.assertEqual(0, len(mock_lchown.mock_calls))

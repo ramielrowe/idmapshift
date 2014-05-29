@@ -45,8 +45,9 @@ def print_chown(path, uid, gid, target_uid, target_gid):
 
 def shift_path(path, uid_mappings, gid_mappings, nobody, uid_memo, gid_memo,
                dry_run=False, verbose=False):
-    uid = os.lstat(path).st_uid
-    gid = os.lstat(path).st_gid
+    stat = os.lstat(path)
+    uid = stat.st_uid
+    gid = stat.st_gid
     target_uid = find_target_uid(uid, uid_mappings, nobody, uid_memo)
     target_gid = find_target_gid(gid, gid_mappings, nobody, gid_memo)
     if verbose:
