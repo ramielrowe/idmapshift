@@ -84,20 +84,6 @@ class FindTargetIDTestCase(BaseTestCase):
         mock_maps.__len__.assert_has_calls([mock.call()])
         self.assertEqual(100, actual_target)
 
-    @mock.patch('idmapshift.find_target_id')
-    def test_find_target_uid_uses_uid_memo(self, mock_ftid):
-        idmapshift.find_target_uid(0, self.uid_maps, main.NOBODY_ID)
-        self.assertEqual(1, len(mock_ftid.mock_calls))
-        args, kwargs = mock_ftid.call_args
-        self.assertIs(idmapshift.UID_MAPPINGS, args[3])
-
-    @mock.patch('idmapshift.find_target_id')
-    def test_find_target_gid_uses_gid_memo(self, mock_ftid):
-        idmapshift.find_target_gid(0, self.gid_maps, main.NOBODY_ID)
-        self.assertEqual(1, len(mock_ftid.mock_calls))
-        args, kwargs = mock_ftid.call_args
-        self.assertIs(idmapshift.GID_MAPPINGS, args[3])
-
 
 class ShiftPathTestCase(BaseTestCase):
     @mock.patch('os.lchown')
@@ -105,7 +91,7 @@ class ShiftPathTestCase(BaseTestCase):
     def test_shift_path(self, mock_lstat, mock_lchown):
         mock_lstat.return_value = FakeStat(0, 0)
         idmapshift.shift_path('/test/path', self.uid_maps, self.gid_maps,
-                              main.NOBODY_ID)
+                              main.NOBODY_ID, dict(), dict())
         mock_lstat.assert_has_calls([mock.call('/test/path')])
         mock_lchown.assert_has_calls([mock.call('/test/path', 10000, 10000)])
 
@@ -114,7 +100,7 @@ class ShiftPathTestCase(BaseTestCase):
     def test_shift_path_dry_run(self, mock_lstat, mock_lchown):
         mock_lstat.return_value = FakeStat(0, 0)
         idmapshift.shift_path('/test/path', self.uid_maps, self.gid_maps,
-                              main.NOBODY_ID, dry_run=True)
+                              main.NOBODY_ID, dict(), dict(), dry_run=True)
         mock_lstat.assert_has_calls([mock.call('/test/path')])
         self.assertEqual(0, len(mock_lchown.mock_calls))
 
@@ -124,7 +110,7 @@ class ShiftPathTestCase(BaseTestCase):
     def test_shift_path_verbose(self, mock_lstat, mock_print, mock_lchown):
         mock_lstat.return_value = FakeStat(0, 0)
         idmapshift.shift_path('/test/path', self.uid_maps, self.gid_maps,
-                              main.NOBODY_ID, verbose=True)
+                              main.NOBODY_ID, dict(), dict(), verbose=True)
         mock_lstat.assert_has_calls([mock.call('/test/path')])
         mock_print_call = mock.call('/test/path', 0, 0, 10000, 10000)
         mock_print.assert_has_calls([mock_print_call])
@@ -147,7 +133,8 @@ class ShiftDirTestCase(BaseTestCase):
         mock_join.assert_has_calls(mock_join_calls)
 
         args = (self.uid_maps, self.gid_maps, main.NOBODY_ID)
-        kwargs = dict(dry_run=False, verbose=False)
+        kwargs = dict(dry_run=False, verbose=False,
+                      uid_memo=dict(), gid_memo=dict())
         shift_path_calls = [mock.call('/' + x, *args, **kwargs) for x in files]
         mock_shift_path.assert_has_calls(shift_path_calls)
 
@@ -168,7 +155,8 @@ class ShiftDirTestCase(BaseTestCase):
         mock_join.assert_has_calls(mock_join_calls)
 
         args = (self.uid_maps, self.gid_maps, main.NOBODY_ID)
-        kwargs = dict(dry_run=True, verbose=False)
+        kwargs = dict(dry_run=True, verbose=False,
+                      uid_memo=dict(), gid_memo=dict())
         shift_path_calls = [mock.call('/' + x, *args, **kwargs) for x in files]
         mock_shift_path.assert_has_calls(shift_path_calls)
 

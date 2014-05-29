@@ -18,9 +18,6 @@
 # under the License.
 import os
 
-UID_MAPPINGS = dict()
-GID_MAPPINGS = dict()
-
 
 def find_target_id(id, mappings, nobody, memo):
     if len(mappings) == 0:
@@ -34,24 +31,24 @@ def find_target_id(id, mappings, nobody, memo):
     return memo[id]
 
 
-def find_target_uid(id, mappings, nobody):
-    return find_target_id(id, mappings, nobody, UID_MAPPINGS)
+def find_target_uid(id, mappings, nobody, memo):
+    return find_target_id(id, mappings, nobody, memo)
 
 
-def find_target_gid(id, mappings, nobody):
-    return find_target_id(id, mappings, nobody, GID_MAPPINGS)
+def find_target_gid(id, mappings, nobody, memo):
+    return find_target_id(id, mappings, nobody, memo)
 
 
 def print_chown(path, uid, gid, target_uid, target_gid):
     print('%s %s:%s -> %s:%s' % (path, uid, gid, target_uid, target_gid))
 
 
-def shift_path(path, uid_mappings, gid_mappings, nobody,
+def shift_path(path, uid_mappings, gid_mappings, nobody, uid_memo, gid_memo,
                dry_run=False, verbose=False):
     uid = os.lstat(path).st_uid
     gid = os.lstat(path).st_gid
-    target_uid = find_target_uid(uid, uid_mappings, nobody)
-    target_gid = find_target_uid(gid, gid_mappings, nobody)
+    target_uid = find_target_uid(uid, uid_mappings, nobody, uid_memo)
+    target_gid = find_target_gid(gid, gid_mappings, nobody, gid_memo)
     if verbose:
         print_chown(path, uid, gid, target_uid, target_gid)
     if not dry_run:
@@ -60,12 +57,16 @@ def shift_path(path, uid_mappings, gid_mappings, nobody,
 
 def shift_dir(dir, uid_mappings, gid_mappings, nobody,
               dry_run=False, verbose=False):
+    uid_memo = dict()
+    gid_memo = dict()
     for root, dirs, files in os.walk(dir):
         for dir in dirs:
             path = os.path.join(root, dir)
             shift_path(path, uid_mappings, gid_mappings, nobody,
-                       dry_run=dry_run, verbose=verbose)
+                       dry_run=dry_run, verbose=verbose,
+                       uid_memo=uid_memo, gid_memo=gid_memo)
         for file in files:
             path = os.path.join(root, file)
             shift_path(path, uid_mappings, gid_mappings, nobody,
-                       dry_run=dry_run, verbose=verbose)
+                       dry_run=dry_run, verbose=verbose,
+                       uid_memo=uid_memo, gid_memo=gid_memo)
