@@ -143,7 +143,9 @@ class ShiftDirTestCase(BaseTestCase):
         args = (self.uid_maps, self.gid_maps, main.NOBODY_ID)
         kwargs = dict(dry_run=False, verbose=False,
                       uid_memo=dict(), gid_memo=dict())
-        shift_path_calls = [mock.call('/' + x, *args, **kwargs) for x in files]
+        shift_path_calls = [mock.call('/', *args, **kwargs)]
+        shift_path_calls += [mock.call('/' + x, *args, **kwargs)
+                             for x in files]
         mock_shift_path.assert_has_calls(shift_path_calls)
 
     @mock.patch('idmapshift.shift_path')
@@ -165,7 +167,9 @@ class ShiftDirTestCase(BaseTestCase):
         args = (self.uid_maps, self.gid_maps, main.NOBODY_ID)
         kwargs = dict(dry_run=True, verbose=False,
                       uid_memo=dict(), gid_memo=dict())
-        shift_path_calls = [mock.call('/' + x, *args, **kwargs) for x in files]
+        shift_path_calls = [mock.call('/', *args, **kwargs)]
+        shift_path_calls += [mock.call('/' + x, *args, **kwargs)
+                             for x in files]
         mock_shift_path.assert_has_calls(shift_path_calls)
 
 
@@ -210,12 +214,13 @@ class IntegrationTestCase(BaseTestCase):
     @mock.patch('os.walk')
     def test_integrated_shift_dir(self, mock_walk, mock_join, mock_lstat,
                                   mock_lchown):
-        mock_walk.return_value = [('/', ['a', 'b', 'c'], ['d']),
-                                  ('/d', ['1', '2'], [])]
+        mock_walk.return_value = [('/tmp/test', ['a', 'b', 'c'], ['d']),
+                                  ('/tmp/test/d', ['1', '2'], [])]
         mock_join.side_effect = join_side_effect
 
         def lstat(path):
             stats = {
+                't': FakeStat(0, 0),
                 'a': FakeStat(0, 0),
                 'b': FakeStat(0, 2),
                 'c': FakeStat(30000, 30000),
@@ -231,12 +236,13 @@ class IntegrationTestCase(BaseTestCase):
                              main.NOBODY_ID, verbose=True)
 
         lchown_calls = [
-            mock.call('/a', 10000, 10000),
-            mock.call('/b', 10000, 10002),
-            mock.call('/c', main.NOBODY_ID, main.NOBODY_ID),
-            mock.call('/d', 20090, 20090),
-            mock.call('/d/1', 10000, 20090),
-            mock.call('/d/2', 20090, 20090),
+            mock.call('/tmp/test', 10000, 10000),
+            mock.call('/tmp/test/a', 10000, 10000),
+            mock.call('/tmp/test/b', 10000, 10002),
+            mock.call('/tmp/test/c', main.NOBODY_ID, main.NOBODY_ID),
+            mock.call('/tmp/test/d', 20090, 20090),
+            mock.call('/tmp/test/d/1', 10000, 20090),
+            mock.call('/tmp/test/d/2', 20090, 20090),
         ]
         mock_lchown.assert_has_calls(lchown_calls)
 
@@ -246,12 +252,13 @@ class IntegrationTestCase(BaseTestCase):
     @mock.patch('os.walk')
     def test_integrated_shift_dir_dry_run(self, mock_walk, mock_join,
                                           mock_lstat, mock_lchown):
-        mock_walk.return_value = [('/', ['a', 'b', 'c'], ['d']),
-                                  ('/d', ['1', '2'], [])]
+        mock_walk.return_value = [('/tmp/test', ['a', 'b', 'c'], ['d']),
+                                  ('/tmp/test/d', ['1', '2'], [])]
         mock_join.side_effect = join_side_effect
 
         def lstat(path):
             stats = {
+                't': FakeStat(0, 0),
                 'a': FakeStat(0, 0),
                 'b': FakeStat(0, 2),
                 'c': FakeStat(30000, 30000),

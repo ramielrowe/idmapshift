@@ -2,6 +2,7 @@ build/
 *.egg-info/
 .idea/
 .tox/
+dist/
 
 *.pyc
 .coverage

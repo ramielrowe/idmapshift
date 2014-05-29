@@ -60,14 +60,17 @@ def shift_dir(dir, uid_mappings, gid_mappings, nobody,
               dry_run=False, verbose=False):
     uid_memo = dict()
     gid_memo = dict()
+
+    def shift_path_short(path):
+        shift_path(path, uid_mappings, gid_mappings, nobody,
+                   dry_run=dry_run, verbose=verbose,
+                   uid_memo=uid_memo, gid_memo=gid_memo)
+
+    shift_path_short(dir)
     for root, dirs, files in os.walk(dir):
         for dir in dirs:
             path = os.path.join(root, dir)
-            shift_path(path, uid_mappings, gid_mappings, nobody,
-                       dry_run=dry_run, verbose=verbose,
-                       uid_memo=uid_memo, gid_memo=gid_memo)
+            shift_path_short(path)
         for file in files:
             path = os.path.join(root, file)
-            shift_path(path, uid_mappings, gid_mappings, nobody,
-                       dry_run=dry_run, verbose=verbose,
-                       uid_memo=uid_memo, gid_memo=gid_memo)
+            shift_path_short(path)
