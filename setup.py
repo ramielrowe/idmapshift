@@ -1,7 +1,7 @@
-from setuptools import setup
+import setuptools
 
 
-setup(
+setuptools.setup(
     name="IDMapShift",
     version="0.0.1",
     packages=['idmapshift'],
@@ -18,8 +18,12 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: POSIX :: Linux"
     ],
-    entry_points="""
-    [console_scripts]
-    idmapshift = idmapshift.main:main
-    """
+    install_requires=[
+        'argparse'
+    ],
+    entry_points={
+        "console_scripts": [
+            "idmapshift = idmapshift.main:main"
+        ]
+    }
 )
