@@ -27,8 +27,8 @@ NOBODY_ID = 65534
 def id_map_type(val):
     maps = val.split(',')
     id_maps = []
-    for map in maps:
-        map_vals = map.split(':')
+    for m in maps:
+        map_vals = m.split(':')
 
         if len(map_vals) != 3:
             msg = ('Invalid id map %s, correct syntax is '
@@ -41,7 +41,7 @@ def id_map_type(val):
             msg = 'Invalid id map %s, values must be integers' % val
             raise argparse.ArgumentTypeError(msg)
 
-        id_maps.append((vals[0], vals[1], vals[2]))
+        id_maps.append(tuple(vals))
     return id_maps
 
 
