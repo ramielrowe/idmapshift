@@ -18,7 +18,7 @@ import setuptools
 
 setuptools.setup(
     name="IDMapShift",
-    version="0.0.1",
+    version="0.0.2",
     packages=['idmapshift'],
     author="Andrew Melton",
     author_email="andrew.melton@rackspace.com",
