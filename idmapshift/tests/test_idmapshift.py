@@ -70,22 +70,13 @@ class FindTargetIDTestCase(BaseTestCase):
     def test_find_target_id_no_mappings(self):
         actual_target = idmapshift.find_target_id(0, [],
                                                   main.NOBODY_ID, dict())
-        self.assertEqual(-1, actual_target)
+        self.assertEqual(main.NOBODY_ID, actual_target)
 
     def test_find_target_id_updates_memo(self):
         memo = dict()
         idmapshift.find_target_id(0, self.uid_maps, main.NOBODY_ID, memo)
         self.assertTrue(0 in memo)
         self.assertEqual(10000, memo[0])
-
-    def test_find_target_id_in_memo(self):
-        mock_maps = mock.MagicMock()
-        mock_maps.__len__.return_value = 1
-        actual_target = idmapshift.find_target_id(0, mock_maps,
-                                                  main.NOBODY_ID, {0: 100})
-        self.assertEqual(1, len(mock_maps.mock_calls))
-        mock_maps.__len__.assert_has_calls([mock.call()])
-        self.assertEqual(100, actual_target)
 
     def test_find_target_guest_id_greater_than_count(self):
         uid_maps = [(500, 10000, 10)]

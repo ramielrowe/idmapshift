@@ -16,8 +16,6 @@ import os
 
 
 def find_target_id(fsid, mappings, nobody, memo):
-    if len(mappings) == 0:
-        return -1
     if fsid not in memo:
         for start, target, count in mappings:
             if start <= fsid < start + count:
