@@ -168,6 +168,11 @@ class ShiftDirTestCase(BaseTestCase):
         mock_shift_path.assert_has_calls(shift_path_calls)
 
 
+class ConfirmPathTestCase(unittest.TestCase):
+    def test_confirm_path(self):
+        idmapshift.confirm_path()
+
+
 class IDMapTypeTestCase(unittest.TestCase):
     def test_id_map_type(self):
         result = main.id_map_type("1:1:1,2:2:2")
@@ -188,6 +193,7 @@ class MainTestCase(BaseTestCase):
     def test_main(self, mock_parser_class, mock_shift_dir):
         mock_parser = mock.MagicMock()
         mock_parser.parse_args.return_value = mock_parser
+        mock_parser.confirm = False
         mock_parser.path = '/test/path'
         mock_parser.uid = self.uid_maps
         mock_parser.gid = self.gid_maps

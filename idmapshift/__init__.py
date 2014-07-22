@@ -70,3 +70,42 @@ def shift_dir(fsdir, uid_mappings, gid_mappings, nobody,
         for f in files:
             path = os.path.join(root, f)
             shift_path_short(path)
+
+
+def confirm_path(path, uid_ranges, gid_ranges, nobody):
+    stat = os.lstat(path)
+    uid = stat.st_uid
+    gid = stat.st_gid
+
+    uid_in_range = True if uid == nobody else False
+    gid_in_range = True if gid == nobody else False
+
+    if not uid_in_range or not gid_in_range:
+        for (start, end) in uid_ranges:
+            if start <= uid <= end:
+                uid_in_range = True
+                break
+
+        for (start, end) in gid_ranges:
+            if start <= gid <= end:
+                gid_in_range = True
+                break
+
+    return uid_in_range and gid_in_range
+
+
+def confirm_dir(fsdir, uid_mappings, gid_mappings, nobody):
+    uid_ranges = [(target, target + count - 1) for (start, target, count) in
+                  uid_mappings]
+    gid_ranges = [(target, target + count - 1) for (start, target, count) in
+                  gid_mappings]
+    for root, dirs, files in os.walk(fsdir):
+        for d in dirs:
+            path = os.path.join(root, d)
+            if not confirm_path(path, uid_ranges, gid_ranges, nobody):
+                return False
+        for f in files:
+            path = os.path.join(root, f)
+            if not confirm_path(path, uid_ranges, gid_ranges, nobody):
+                return False
+    return True
