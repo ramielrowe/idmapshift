@@ -29,14 +29,6 @@ def find_target_id(fsid, mappings, nobody, memo):
     return memo[fsid]
 
 
-def find_target_uid(fsid, mappings, nobody, memo):
-    return find_target_id(fsid, mappings, nobody, memo)
-
-
-def find_target_gid(fsid, mappings, nobody, memo):
-    return find_target_id(fsid, mappings, nobody, memo)
-
-
 def print_chown(path, uid, gid, target_uid, target_gid):
     print('%s %s:%s -> %s:%s' % (path, uid, gid, target_uid, target_gid))
 
@@ -46,8 +38,8 @@ def shift_path(path, uid_mappings, gid_mappings, nobody, uid_memo, gid_memo,
     stat = os.lstat(path)
     uid = stat.st_uid
     gid = stat.st_gid
-    target_uid = find_target_uid(uid, uid_mappings, nobody, uid_memo)
-    target_gid = find_target_gid(gid, gid_mappings, nobody, gid_memo)
+    target_uid = find_target_id(uid, uid_mappings, nobody, uid_memo)
+    target_gid = find_target_id(gid, gid_mappings, nobody, gid_memo)
     if verbose:
         print_chown(path, uid, gid, target_uid, target_gid)
     if not dry_run:
