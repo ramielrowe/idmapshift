@@ -87,6 +87,24 @@ class FindTargetIDTestCase(BaseTestCase):
         mock_maps.__len__.assert_has_calls([mock.call()])
         self.assertEqual(100, actual_target)
 
+    def test_find_target_guest_id_greater_than_count(self):
+        uid_maps = [(500, 10000, 10)]
+
+        # Below range
+        actual_target = idmapshift.find_target_id(499, uid_maps,
+                                                  main.NOBODY_ID, dict())
+        self.assertEqual(main.NOBODY_ID, actual_target)
+
+        # Match
+        actual_target = idmapshift.find_target_id(501, uid_maps,
+                                                  main.NOBODY_ID, dict())
+        self.assertEqual(10001, actual_target)
+
+        # Beyond range
+        actual_target = idmapshift.find_target_id(510, uid_maps,
+                                                  main.NOBODY_ID, dict())
+        self.assertEqual(main.NOBODY_ID, actual_target)
+
 
 class ShiftPathTestCase(BaseTestCase):
     @mock.patch('os.lchown')
