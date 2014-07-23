@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import argparse
+import sys
 
 import idmapshift
 
@@ -46,9 +47,19 @@ def main():
     parser.add_argument('-u', '--uid', type=id_map_type, default=[])
     parser.add_argument('-g', '--gid', type=id_map_type, default=[])
     parser.add_argument('-n', '--nobody', default=NOBODY_ID, type=int)
+    parser.add_argument('-i', '--idempotent', action='store_true')
+    parser.add_argument('-c', '--confirm', action='store_true')
     parser.add_argument('-d', '--dry-run', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
+
+    if args.idempotent or args.confirm:
+        if idmapshift.confirm_dir(args.path, args.uid, args.gid,
+                                      args.nobody):
+            sys.exit(0)
+        else:
+            if args.confirm:
+                sys.exit(1)
 
     idmapshift.shift_dir(args.path, args.uid, args.gid, args.nobody,
                          dry_run=args.dry_run, verbose=args.verbose)
