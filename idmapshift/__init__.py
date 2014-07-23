@@ -20,7 +20,7 @@ def find_target_id(fsid, mappings, nobody, memo):
         return -1
     if fsid not in memo:
         for start, target, count in mappings:
-            if start <= fsid < count:
+            if start <= fsid < start + count:
                 memo[fsid] = (fsid - start) + target
     if fsid not in memo:
         memo[fsid] = nobody
